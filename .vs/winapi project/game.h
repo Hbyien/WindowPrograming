@@ -10,6 +10,7 @@ typedef struct {
     Map* map;
     Camera* camera;
     Character* character;
+    int move_direction; //-1 哭率 1坷弗率 0 力磊府
 } Game;
 
 void game_init(Game* game, HWND hWnd);

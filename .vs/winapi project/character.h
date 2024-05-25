@@ -8,6 +8,10 @@ typedef struct {
     int y;
     int width;
     int height;
+    float jump_velocity;
+    float gravity;
+    bool is_jumping;
+    bool is_flying;
 } Character;
 
 Character* character_create(int x, int y, int width, int height);

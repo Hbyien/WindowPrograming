@@ -30,6 +30,12 @@
     <ClCompile Include="character.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="kumba.h">
+      <Filter>헤더 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="kumba.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game.h">

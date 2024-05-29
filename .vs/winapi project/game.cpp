@@ -1,6 +1,7 @@
 // game.c
 #include "game.h"
-
+#include <iostream>
+    
 void game_init(Game* game, HWND hWnd) {
     game->map = map_create(L"STAGE1.png", hWnd);
     RECT rect;
@@ -9,6 +10,18 @@ void game_init(Game* game, HWND hWnd) {
     int window_height = rect.bottom - rect.top;
     game->camera = camera_create(window_width, window_height, game->map->width, game->map->height);
     game->character = character_create(50, 185, 10, 15); // 캐릭터 초기 위치 및 크기 설정
+    kumba_init(L"enemy//kumba.png", 8, RGB(120, 182, 255));
+    game->kumbas_num = game->map->num_spawn_points;
+    game->kumbas = (Kumba**)malloc(game->kumbas_num * sizeof(Kumba*));
+
+    for (int i = 0; i < game->kumbas_num; i++) {
+        std::cout << game->kumbas_num << std::endl;
+        game->kumbas[i] = kumba_create(
+            (float)game->map->spawn_points[i].x,
+            (float)game->map->spawn_points[i].y,
+            20, 20, 50.0f, 0.016f);
+    }
+   
     game->move_direction = 0;
 }
 
@@ -16,6 +29,9 @@ void game_update(Game* game) {
     float dt = 0.016f; 
     int dx = 0;
  
+    for (int i = 0; i < game->kumbas_num; i++) {
+        kumba_move(game->kumbas[i], game->map, dt);
+    }
 
     if (game->move_direction == -1) {
         dx = game->character->is_flying ? -1 : -2; //비행중이면 속도가 느려진다.
@@ -60,12 +76,16 @@ void game_update(Game* game) {
 
     camera_set(game->camera, game->character);
 }
+
+
 void game_render(Game* game, HDC hdc) {
     int window_width = 800;
     int window_height = 600;
 
     map_render(game->map, hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height);
-
+    for (int i = 0; i < game->kumbas_num; ++i) {
+        kumba_render(game->kumbas[i], hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height, game->map->height);
+    }
     // 캐릭터 렌더링
     float scale_x = (float)window_width / game->map->height;
     float scale_y = (float)window_height / game->map->height;
@@ -100,7 +120,7 @@ void game_handle_input(Game* game, WPARAM wParam, int key_down) {
             }
             else if (game->character->is_jumping && !game->character->is_flying) // 점프 도중 스페이스바를 누르면 비행모드 진입
             {
-                 game->character->is_flying = true;
+                    game->character->is_flying = true;
             }
             else if (!game->character->is_jumping)
             {

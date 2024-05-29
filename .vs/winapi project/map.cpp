@@ -5,49 +5,69 @@
 #include <stdlib.h>
 #include <iostream>
 
+#define MAX_CLIFFS 3            //stage 1 낭떠러지 영역 몬스터 낭떨어지 안떨어지도록
+
+Cllif cllif[MAX_CLIFFS] = {
+    {0,20},
+    {1100,1130},
+    {1370,1420}
+};
+
 RECT collsion_rects[] = {
-    {0, 208, 1106, 236},
-    {447, 175, 480, 208},
+    {0, 210, 1106, 236},
+    {447, 175, 480, 210},
     {606,160,640,208},
-    {736, 145, 768,208},
-    {913,145,948,208},
-    {1136,208,1375,236},
-    {1425,208,2449,208},
+    {736, 145, 768,210},
+    {913,145,948,210},
+    {1136,210,1375,236},
+    {1425,210,2449,210},
 
     {2144,193,2209,208},
     {2160, 176,2209,193},
     {2175,159, 2209,176},
     {2191,142,2209,159} ,
 
-    {2240,142,2255,208},
-    {2255,159,2271,208},
-    {2271,175,2287,208},
-    {2287,191,2303,208},
+    {2240,142,2255,210},
+    {2255,159,2271,210},
+    {2271,175,2287,210},
+    {2287,191,2303,210},
 
-    {2368,193,2448,208},
-    {2384,177,2448,208},
-    {2400,161,2448,208},
-    {2416,145,2448,208},
+    {2368,193,2448,210},
+    {2384,177,2448,210},
+    {2400,161,2448,210},
+    {2416,145,2448,210},
 
-    {2480, 142 ,2495,208}, 
-    {2495, 159,2510,208},
-    {2510,175,2525,208},
-    {2525,191,2540,208}
+    {2480, 142 ,2495,210}, 
+    {2495, 159,2510,210},
+    {2510,175,2525,210},
+    {2525,191,2540,210}
         
-  , {2608,175,2640,208},
-    {2864,175,2895,208},
+  , {2608,175,2640,210},
+    {2864,175,2895,210},
 
-    {2896,191,3040,208},
-    {2912,175,3040,208},
-    {2928,159,3040,208},
-    {2944,143,3040,208},
-    {2960,127,3040,208},
-    {2976,111,3040,208},
-    {2992,94,3040,208},
-    {3008,78,3040,208},
-    {1423,208,2448,236 },
-    {2480,208,3374,236 }
+    {2896,191,3040,210},
+    {2912,175,3040,210},
+    {2928,159,3040,210},
+    {2944,143,3040,210},
+    {2960,127,3040,210},
+    {2976,111,3040,210},
+    {2992,94,3040,210},
+    {3008,78,3040,210},
+    {1423,210,2448,236 },
+    {2480,210,3374,236 }
     
+};
+
+KumbaSpawnPoint spawn_points[] = {
+    {420, 185},
+    {550, 185},
+    {850, 185},
+    {1050,185},
+    {1200,185},
+    {1600,185},
+    {1900,185},
+    {2777,185}
+    // 추가적인 소환 위치를 여기서 정의
 };
 
 Map* map_create(const wchar_t* filename, HWND hWnd) {
@@ -69,6 +89,18 @@ Map* map_create(const wchar_t* filename, HWND hWnd) {
     map->height = image.GetHeight();
     map->map_image = image.Detach();
     map->show_collision = true;
+
+    for (int i = 0; i < MAX_CLIFFS; ++i) {
+        map->cliffs[i] = cllif[i];
+    }
+
+    // Kumba 소환 위치 초기화
+    map->num_spawn_points = sizeof(spawn_points) / sizeof(spawn_points[0]);
+    map->spawn_points = (KumbaSpawnPoint*)malloc(map->num_spawn_points * sizeof(KumbaSpawnPoint));
+    for (int i = 0; i < map->num_spawn_points; ++i) {
+        map->spawn_points[i] = spawn_points[i];
+    }
+
     return map;
 }
 
@@ -132,20 +164,29 @@ int map_check_collision(Map* map, int x, int y, int width, int height) {
     RECT obj_rect = { x, y, x + width, y + height }; // 캐릭터 좌표 받기
 
     // 디버깅 출력
-    std::cout << "Checking collision at (" << x << ", " << y << ", " << x + width << ", " << y + height << ")" << std::endl;
+    /*std::cout << "Checking collision at (" << x << ", " << y << ", " << x + width << ", " << y + height << ")" << std::endl;*/
 
     for (int i = 0; i < map->num_collision_rects; ++i) {
-        std::cout << "Against collision rect ("
+        /*std::cout << "Against collision rect ("
             << map->collision_rects[i].left << ", "
             << map->collision_rects[i].top << ", "
             << map->collision_rects[i].right << ", "
-            << map->collision_rects[i].bottom << ")" << std::endl;
+            << map->collision_rects[i].bottom << ")" << std::endl;*/
 
         if (RectsIntersect(&obj_rect, &map->collision_rects[i])) {
-            std::cout << "충돌 발생 " << std::endl;
+            /*std::cout << "충돌 발생 " << std::endl;*/
             return 1; // 충돌 발생
         }
     }
-    std::cout << "No collision." << std::endl;
+   /* std::cout << "No collision." << std::endl;*/
     return 0; // 충돌 없음
+}
+
+bool check_cliff(Map* map, int new_x) {
+    for (int i = 0; i < MAX_CLIFFS; ++i) {
+        if (new_x >= map->cliffs[i].startx && new_x <= map->cliffs[i].endx) {
+            return true; // 낭떠러지 영역 내에 있음
+        }
+    }
+    return false; // 낭떠러지 영역 내에 없음
 }

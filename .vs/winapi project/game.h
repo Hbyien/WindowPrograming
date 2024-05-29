@@ -5,12 +5,17 @@
 #include "camera.h"
 #include "map.h"
 #include "character.h"
+#include "kumba.h"
+
+
 
 typedef struct {
     Map* map;
     Camera* camera;
     Character* character;
+    Kumba** kumbas;
     int move_direction; //-1 哭率 1坷弗率 0 力磊府
+    int kumbas_num;
 } Game;
 
 void game_init(Game* game, HWND hWnd);

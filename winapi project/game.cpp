@@ -26,15 +26,6 @@ void game_init(Game* game, HWND hWnd) {
                 (float)game->map->spawn_points[i].y,
                 20, 20, 50.0f, 0.016f);
         }
-        
-        int num_coins = 10;
-        for (int i = 0; i < num_coins; i++) {
-            Coin* coin = coin_create(game->map->coin_spawn_points[i].x, game->map->coin_spawn_points[i].y, 16, 16, L"BaseImage//Coin.png", 4, 0.1f);
-            game->coins.push_back(coin);
-        }
-        std::cout << "코인 개수는 :" << game->coins.size() << endl;
-
-        game->coin_count = 0; // 코인 개수 초기화
         game->move_direction = 0;
     }
 
@@ -53,21 +44,6 @@ void game_update(Game* game) {
         }
         character_update(game->character, game->map, dt);
         camera_set(game->camera, game->character);
-
-        for (auto& coin : game->coins) {
-            coin_update(coin, dt); // 코인 업데이트 추가
-        }
-
-        for (auto it = game->coins.begin(); it != game->coins.end(); ) {
-            if (coin_character_check_collision(game->character, (*it))) {
-                game->coin_count++;
-                it = game->coins.erase(it); // 충돌된 코인을 벡터에서 제거
-            }
-            else {
-                ++it;
-            }
-        }
-
         break;
     }
 }
@@ -88,11 +64,7 @@ void game_render(Game* game, HDC hdc) {
         for (int i = 0; i < game->kumbas_num; ++i) {
             kumba_render(game->kumbas[i], hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height, game->map->height);
         }
-        for (auto& coin : game->coins) {
-            coin_render(coin, hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height, game->map->height);
-        }
         character_render(game->character, hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height, game->map->height);
-        
         break;
         
     }
@@ -147,10 +119,6 @@ void game_handle_input(Game* game, WPARAM wParam, LPARAM lParam, int key_down) {
         if (key_down && (wParam == 'C' || wParam == 'c')) {
             map_toggle_collision(game->map);
         }
-
-        if (key_down && (wParam == 'n' || wParam == 'N'))
-            game->coins.size();
-
         break;
     }
 }

@@ -85,6 +85,20 @@ KumbaSpawnPoint spawn_points[] = {
     // 추가적인 소환 위치를 여기서 정의
 };
 
+CoinSpawnPoint coin_spawn_points[] = {
+    {352, 62},
+    {322, 126},
+    {459, 154},
+    {923, 124},
+    {1295, 62},
+    {1613, 126},
+    {1282, 128},
+    {2225, 110},
+    {2740, 128},
+    {2874, 49}
+    // 추가적인 코인 소환 위치를 여기서 정의
+};
+
 Map* map_create(const wchar_t* filename, HWND hWnd) {
     Map* map = (Map*)malloc(sizeof(Map));
     CImage image;
@@ -119,6 +133,12 @@ Map* map_create(const wchar_t* filename, HWND hWnd) {
     map->brick_collision_rects = (RECT*)malloc(map->num_brick_collsions * sizeof(RECT));
     for (int i = 0; i < map->num_brick_collsions; ++i) {
         map->brick_collision_rects[i] = brick_collsion[i];
+    }
+
+    map->num_coin_spawn_points = sizeof(coin_spawn_points) / sizeof(coin_spawn_points[0]);
+    map->coin_spawn_points = (CoinSpawnPoint*)malloc(map->num_coin_spawn_points * sizeof(CoinSpawnPoint));
+    for (int i = 0; i < map->num_coin_spawn_points; ++i) {
+        map->coin_spawn_points[i] = coin_spawn_points[i];
     }
 
     return map;

@@ -2,13 +2,16 @@
 #define GAME_H
 
 #include <windows.h>
+#include <vector>
 #include "camera.h"
 #include "map.h"
 #include "character.h"
-#include "kumba.h"
 #include "Logo.h"
 #include "MoveMap.h"
+#include "coin.h"
+#include "kumba.h"
 
+using namespace std;
 
 enum GameState {
     STATE_LOGO,
@@ -26,6 +29,9 @@ typedef struct {
     int move_direction; //-1 ¿ÞÂÊ 1¿À¸¥ÂÊ 0 Á¦ÀÚ¸®
     int kumbas_num;
     int game_state; // ½ÃÀÛ ·Î°í, 1 ¸Ê ÀÌµ¿, 2. ¸Ê1 3. ¸Ê2 4.¸Ê3
+    vector<Coin*> coins;
+    int coins_num; 
+    int coin_count;
 } Game;
 
 void game_init(Game* game, HWND hWnd);

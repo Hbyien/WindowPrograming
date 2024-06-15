@@ -8,7 +8,9 @@
 
 typedef enum {
     IDLE,
-    WALK
+    WALK,
+    JUMP,
+    FLY
 } CharacterState;
 
 typedef enum {
@@ -31,7 +33,7 @@ typedef struct {
     int current_frame;
     float animation_timer;
     float animation_speed;
-    CImage images[2]; // IDLE과 WALK 이미지 배열
+    CImage images[10]; // 애니메이션 저장 배열
 } Character;
 
 Character* character_create(int x, int y, int width, int height);

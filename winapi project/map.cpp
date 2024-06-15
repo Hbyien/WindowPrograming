@@ -99,28 +99,44 @@ CoinSpawnPoint coin_spawn_points[] = {
     
 };
 
-
-Map* map_create(const wchar_t* filename, HWND hWnd) {
+Map* map_create(const wchar_t* filename, const wchar_t* cloud_filename, HWND hWnd) {
     Map* map = (Map*)malloc(sizeof(Map));
     CImage image;
     HRESULT hr = image.Load(filename);
     if (FAILED(hr)) {
         MessageBox(hWnd, L"Failed to load map image", L"Error", MB_OK);
-        exit(EXIT_FAILURE);
+        free(map);
+        return NULL;
     }
 
+    // 충돌 영역 초기화
     map->num_collision_rects = sizeof(collsion_rects) / sizeof(collsion_rects[0]);
     map->collision_rects = (RECT*)malloc(map->num_collision_rects * sizeof(RECT));
     for (int i = 0; i < map->num_collision_rects; ++i) {
         map->collision_rects[i] = collsion_rects[i];
     }
+
     map->width = image.GetWidth();
     map->height = image.GetHeight();
     map->map_image = image.Detach();
     map->show_collision = true;
+
+    // 절벽 초기화
     for (int i = 0; i < MAX_CLIFFS; ++i) {
         map->cliffs[i] = cllif[i];
     }
+
+    // 구름 레이어 초기화
+    CImage cloudImage;
+    hr = cloudImage.Load(cloud_filename);
+    if (FAILED(hr)) {
+        MessageBox(NULL, L"Failed to load cloud layer image", L"Error", MB_OK);
+        DeleteObject(map->map_image);
+        free(map);
+        return NULL;
+    }
+    map->cloud_layer_image = cloudImage.Detach();
+    map->cloud_offset_x = 0;
 
     // Kumba 소환 위치 초기화
     map->num_spawn_points = sizeof(spawn_points) / sizeof(spawn_points[0]);
@@ -129,20 +145,19 @@ Map* map_create(const wchar_t* filename, HWND hWnd) {
         map->spawn_points[i] = spawn_points[i];
     }
 
-    // map brick 충돌영역 설정
+    // 벽돌 충돌 영역 초기화
     map->num_brick_collsions = sizeof(brick_collsion) / sizeof(brick_collsion[0]);
     map->brick_collision_rects = (RECT*)malloc(map->num_brick_collsions * sizeof(RECT));
     for (int i = 0; i < map->num_brick_collsions; ++i) {
         map->brick_collision_rects[i] = brick_collsion[i];
     }
 
+    // 코인 소환 위치 초기화
     map->num_coin_spawn_points = sizeof(coin_spawn_points) / sizeof(coin_spawn_points[0]);
     map->coin_spawn_points = (CoinSpawnPoint*)malloc(map->num_coin_spawn_points * sizeof(CoinSpawnPoint));
     for (int i = 0; i < map->num_coin_spawn_points; ++i) {
         map->coin_spawn_points[i] = coin_spawn_points[i];
     }
-
-
 
     return map;
 }
@@ -154,16 +169,53 @@ void map_destroy(Map* map) {
 }
 
 void map_render(Map* map, HDC hdc, int x, int y, int window_width, int window_height) {
-    HDC hMemDC = CreateCompatibleDC(hdc);
-    SelectObject(hMemDC, map->map_image);
+    // 구름 레이어를 그립니다.
+    HDC hCloudDC = CreateCompatibleDC(hdc);
+    HBITMAP oldCloudBitmap = (HBITMAP)SelectObject(hCloudDC, map->cloud_layer_image);
+
+    int cloud_width = map->width;
+    int cloud_height = map->height;
+
+    int cloud_x = (int)map->cloud_offset_x % cloud_width;
+
+    // 구름 레이어를 StretchBlt를 사용하여 스케일링 및 이동하여 그립니다.
+    StretchBlt(hdc, 0, 0, window_width, window_height, hCloudDC, cloud_x, 0, cloud_height, cloud_height, SRCCOPY);
+    if (cloud_x+ cloud_height > cloud_width) {
+        cloud_x = 0;
+    }
+    SelectObject(hCloudDC, oldCloudBitmap);
+
+    DeleteDC(hCloudDC);
+
+    // 맵 레이어를 그립니다.
+    HDC hMapDC = CreateCompatibleDC(hdc);
+    HBITMAP oldMapBitmap = (HBITMAP)SelectObject(hMapDC, map->map_image);
 
     int map_width = map->width;
     int map_height = map->height;
 
-    StretchBlt(hdc, 0, 0, window_width, window_height, hMemDC, x, y, map_height, map_height, SRCCOPY);
+    // 임시 DC 생성
+    HDC hTempDC = CreateCompatibleDC(hdc);
+    HBITMAP hTempBitmap = CreateCompatibleBitmap(hdc, window_width, window_height);
+    HBITMAP oldTempBitmap = (HBITMAP)SelectObject(hTempDC, hTempBitmap);
 
+    // StretchBlt를 사용하여 임시 DC에 비트맵을 복사합니다.
+    StretchBlt(hTempDC, 0, 0, window_width, window_height, hMapDC, x, y, map_height, map_height, SRCCOPY);
+
+    // 투명색을 흰색으로 설정하고 TransparentBlt를 사용하여 최종적으로 화면에 그립니다.
+    TransparentBlt(hdc, 0, 0, window_width, window_height, hTempDC, 0, 0, window_width, window_height, RGB(255, 255, 255));
+
+    // 리소스 해제
+    SelectObject(hTempDC, oldTempBitmap);
+    DeleteObject(hTempBitmap);
+    DeleteDC(hTempDC);
+
+    SelectObject(hMapDC, oldMapBitmap);
+    DeleteDC(hMapDC);
+
+    // 충돌 영역을 그립니다.
     if (map->show_collision) {
-        HPEN pen = CreatePen(PS_SOLID, 4, RGB(255, 0, 0)); // 두께 3의 빨간색 펜으로 변경
+        HPEN pen = CreatePen(PS_SOLID, 4, RGB(255, 0, 0)); // 두께 4의 빨간색 펜으로 변경
         HGDIOBJ oldPen = SelectObject(hdc, pen);
         HBRUSH hBrush = (HBRUSH)GetStockObject(HOLLOW_BRUSH); // 채우지 않는 브러쉬로 설정
         HGDIOBJ oldBrush = SelectObject(hdc, hBrush);
@@ -182,7 +234,6 @@ void map_render(Map* map, HDC hdc, int x, int y, int window_width, int window_he
             Rectangle(hdc, scaled_rect.left, scaled_rect.top, scaled_rect.right, scaled_rect.bottom); // 사각형 테두리를 그립니다
         }
 
-
         for (int i = 0; i < map->num_brick_collsions; ++i) {
             RECT rect = map->brick_collision_rects[i];
             RECT scaled_rect = {
@@ -198,8 +249,6 @@ void map_render(Map* map, HDC hdc, int x, int y, int window_width, int window_he
         SelectObject(hdc, oldBrush);
         DeleteObject(pen);
     }
-
-    DeleteDC(hMemDC);
 }
 
 
@@ -212,6 +261,14 @@ bool RectsIntersect(const RECT* rect1, const RECT* rect2) {
         rect1->left > rect2->right ||
         rect1->bottom < rect2->top ||
         rect1->top > rect2->bottom);
+}
+
+void map_update(Map* map, float player_velocity_x, float dt) {
+    // 플레이어 속도의 절반으로 구름 레이어 이동
+    map->cloud_offset_x += player_velocity_x * 0.5f * dt;
+    if (map->cloud_offset_x >= map->width) {
+        map->cloud_offset_x = 0;
+    }
 }
 
 

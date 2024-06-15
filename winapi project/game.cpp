@@ -13,7 +13,7 @@ void game_init(Game* game, HWND hWnd) {
     LoadMap();
 
     { // map 1 ÃÊ±âÈ­ 
-        game->map = map_create(L"BaseImage//STAGE1.png", hWnd);
+        game->map = map_create(L"BaseImage//STAGE1-layer.png", L"BaseImage//STAGE1-layer1.png", hWnd);
         RECT rect;
         GetClientRect(hWnd, &rect);
         int window_width = rect.right - rect.left;
@@ -61,6 +61,8 @@ void game_update(Game* game) {
         character_update(game->character, game->map, dt);
         camera_set(game->camera, game->character);
 
+        map_update(game->map, game->character->move_direction * 100.0f, dt);
+
         for (auto it = game->coins.begin(); it != game->coins.end(); ) {
             Coin* coin = *it;
             if (coin_character_check_collision(game->character, coin)) {
@@ -73,7 +75,10 @@ void game_update(Game* game) {
                 ++it;
             }
         }
-
+        game->map->cloud_offset_x += 0.1;
+        if (game->map->cloud_offset_x >= game->map->width) {
+            game->map->cloud_offset_x = 0;
+        }
       
 
         break;

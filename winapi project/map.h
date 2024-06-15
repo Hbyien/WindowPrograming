@@ -28,6 +28,8 @@ typedef struct {
 
 typedef struct {
     HBITMAP map_image;
+    HBITMAP cloud_layer_image;
+    float cloud_offset_x;
     int width;
     int height;
     RECT* collision_rects;
@@ -43,13 +45,12 @@ typedef struct {
 } Map;
 
 
-
-Map* map_create(const wchar_t* filename, HWND hWnd);
+Map* map_create(const wchar_t* map_filename, const wchar_t* cloud_filename, HWND hWnd);
 void map_destroy(Map* map);
 void map_render(Map* map, HDC hdc, int x, int y, int window_width, int window_height);
 void map_toggle_collision(Map* map);
 int map_check_collision(Map* map, int x, int y, int width, int height); // 충돌 체크 함수
 bool RectsIntersect(const RECT* rect1, const RECT* rect2);
 bool check_cliff(Map* map, int new_x);
-
+void map_update(Map* map, float player_velocity_x, float dt);
 #endif // MAP_H

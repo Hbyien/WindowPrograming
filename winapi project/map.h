@@ -9,6 +9,11 @@ typedef struct {
     int y;
 } KumbaSpawnPoint;
 
+typedef struct {
+    int x;
+    int y;
+} CoinSpawnPoint;
+
 typedef struct Cllif {
     int startx;
     int endx;
@@ -28,7 +33,9 @@ typedef struct {
     bool show_collision;
     Cllif cliffs[3];
     KumbaSpawnPoint* spawn_points; // Kumba 소환 위치 배열
+    CoinSpawnPoint* coin_spawn_points;
     int num_spawn_points; // Kumba 소환 위치 수
+    int coin_num_spawn_points;
     RECT* brick_collision_rects;
     int num_brick_collsions;
 } Map;

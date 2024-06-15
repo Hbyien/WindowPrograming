@@ -85,6 +85,11 @@ KumbaSpawnPoint spawn_points[] = {
     // 추가적인 소환 위치를 여기서 정의
 };
 
+CoinSpawnPoint coin_spawn_points[] = {
+   
+    {300, 185}
+};
+
 Map* map_create(const wchar_t* filename, HWND hWnd) {
     Map* map = (Map*)malloc(sizeof(Map));
     CImage image;
@@ -112,6 +117,13 @@ Map* map_create(const wchar_t* filename, HWND hWnd) {
     map->spawn_points = (KumbaSpawnPoint*)malloc(map->num_spawn_points * sizeof(KumbaSpawnPoint));
     for (int i = 0; i < map->num_spawn_points; ++i) {
         map->spawn_points[i] = spawn_points[i];
+    }
+
+    //coin
+    map->coin_num_spawn_points = sizeof(coin_spawn_points) / sizeof(coin_spawn_points[0]);
+    map->coin_spawn_points = (CoinSpawnPoint*)malloc(map->coin_num_spawn_points * sizeof(CoinSpawnPoint));
+    for (int i = 0; i < map->coin_num_spawn_points; ++i) {
+        map->coin_spawn_points[i] = coin_spawn_points[i];
     }
 
     // map brick 충돌영역 설정

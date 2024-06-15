@@ -8,6 +8,8 @@
 #include "kumba.h"
 #include "Logo.h"
 #include "MoveMap.h"
+#include "coin.h"
+#include <string>
 
 
 enum GameState {
@@ -23,9 +25,17 @@ typedef struct {
     Camera* camera;
     Character* character;
     Kumba** kumbas;
+
+    Coin** coin;
     int move_direction; //-1 ¿ŞÂÊ 1¿À¸¥ÂÊ 0 Á¦ÀÚ¸®
     int kumbas_num;
+    int coins_num;
+
     int game_state; // ½ÃÀÛ ·Î°í, 1 ¸Ê ÀÌµ¿, 2. ¸Ê1 3. ¸Ê2 4.¸Ê3
+
+    int timer;
+    DWORD last_update_time;
+
 } Game;
 
 void game_init(Game* game, HWND hWnd);

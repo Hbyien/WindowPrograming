@@ -5,6 +5,9 @@
 void game_init(Game* game, HWND hWnd) {
 
     game->game_state = STATE_LOGO;
+    game->timer = 0;
+    game->last_update_time = GetTickCount();
+
     LoadLogo();
     LoadMap();
 
@@ -27,11 +30,22 @@ void game_init(Game* game, HWND hWnd) {
                 20, 20, 50.0f, 0.016f);
         }
         game->move_direction = 0;
+
+        coin_init(L"coin1.png", 4, RGB(136,191,157));
+        game->coins_num = game->map->coin_num_spawn_points;
+        game->coin = (Coin**)malloc(game->coins_num * sizeof(Coin*));
+        for (int i = 0; i < game->coins_num; i++) {
+            std::cout << game->coins_num << std::endl;
+            game->coin[i] = coin_create(
+                (float)game->map->coin_spawn_points[i].x,
+                (float)game->map->coin_spawn_points[i].y,
+                20, 20);
+        }
     }
 
 }
-
 void game_update(Game* game) {
+    DWORD current_time = GetTickCount();
     switch (game->game_state) {
     case STATE_LOGO:
         break;
@@ -42,9 +56,20 @@ void game_update(Game* game) {
         for (int i = 0; i < game->kumbas_num; i++) {
             kumba_move(game->kumbas[i], game->map, dt);
         }
+        for (int i = 0; i < game->coins_num; i++) {
+            coin_update(game->coin[i], dt); // Update coin animation
+        }
         character_update(game->character, game->map, dt);
         camera_set(game->camera, game->character);
         break;
+    }
+
+    // Update timer every second when in STATE_WORLD1
+    if (game->game_state == STATE_WORLD1) {
+        if (current_time - game->last_update_time >= 1000) {
+            game->timer++;
+            game->last_update_time = current_time;
+        }
     }
 }
 
@@ -60,13 +85,39 @@ void game_render(Game* game, HDC hdc) {
         RenderMap(hdc);
         break;
         case STATE_WORLD1: 
-        map_render(game->map, hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height);
-        for (int i = 0; i < game->kumbas_num; ++i) {
-            kumba_render(game->kumbas[i], hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height, game->map->height);
+        {
+            map_render(game->map, hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height);
+            for (int i = 0; i < game->kumbas_num; ++i) {
+                kumba_render(game->kumbas[i], hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height, game->map->height);
+            }
+            for (int i = 0; i < game->coins_num; ++i) {
+                coin_render(game->coin[i], hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height, game->map->height);
+            }
+
+            character_render(game->character, hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height, game->map->height);
+
+            // 타이머 그리기
+            std::wstring timer_text = L"Timer: ";
+            timer_text += (game->timer < 100) ? L"0" : L"";
+            timer_text += (game->timer < 10) ? L"0" : L"";
+            timer_text += std::to_wstring(game->timer);
+
+
+            SetTextColor(hdc, RGB(255, 255, 0));
+            SetBkMode(hdc, TRANSPARENT);
+
+
+            HFONT hFont = CreateFont(24, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, L"Arial");
+            HFONT hOldFont = (HFONT)SelectObject(hdc, hFont);
+
+            TextOut(hdc, window_width - 150, 10, timer_text.c_str(), timer_text.length());
+
+
+            SelectObject(hdc, hOldFont);
+            DeleteObject(hFont);
+
+            break;
         }
-        character_render(game->character, hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height, game->map->height);
-        break;
-        
     }
     
 }

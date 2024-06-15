@@ -8,7 +8,8 @@
 #include "kumba.h"
 #include "Logo.h"
 #include "MoveMap.h"
-
+#include <vector>
+#include "Coin.h"
 
 enum GameState {
     STATE_LOGO,
@@ -26,6 +27,9 @@ typedef struct {
     int move_direction; //-1 왼쪽 1오른쪽 0 제자리
     int kumbas_num;
     int game_state; // 시작 로고, 1 맵 이동, 2. 맵1 3. 맵2 4.맵3
+    std::vector<Coin*> coins; // 코인 벡터
+    int coins_num; // 코인 수
+    int coin_count; // 획득한 코인 개수
 } Game;
 
 void game_init(Game* game, HWND hWnd);

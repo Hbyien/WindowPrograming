@@ -26,6 +26,15 @@ void game_init(Game* game, HWND hWnd) {
                 (float)game->map->spawn_points[i].y,
                 20, 20, 50.0f, 0.016f);
         }
+        int num_coins = 10;
+        for (int i = 0; i < num_coins; i++) {
+            Coin* coin = coin_create(game->map->coin_spawn_points[i].x, game->map->coin_spawn_points[i].y, 16, 16, L"BaseImage//Coin.png", 4, 0.1f);
+            game->coins.push_back(coin);
+        }
+        std::cout << " " << game->coins.size() << std::endl;
+
+        game->coin_count = 0;
+        game->move_direction = 0;
         game->move_direction = 0;
     }
 
@@ -44,6 +53,20 @@ void game_update(Game* game) {
         }
         character_update(game->character, game->map, dt);
         camera_set(game->camera, game->character);
+
+        for (auto it = game->coins.begin(); it != game->coins.end(); ) {
+            Coin* coin = *it;
+            if (coin_character_check_collision(game->character, coin)) {
+                game->coin_count++;
+                it = game->coins.erase(it); // 충돌된 코인을 벡터에서 제거
+                free(coin); // 메모리 해제
+            }
+            else {
+                coin_update(coin, dt);
+                ++it;
+            }
+        }
+
         break;
     }
 }
@@ -64,9 +87,15 @@ void game_render(Game* game, HDC hdc) {
         for (int i = 0; i < game->kumbas_num; ++i) {
             kumba_render(game->kumbas[i], hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height, game->map->height);
         }
+        for (auto& coin : game->coins) {
+            coin_render(coin, hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height, game->map->height);
+        }
+
         character_render(game->character, hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height, game->map->height);
         break;
         
+
+
     }
     
 }

@@ -5,6 +5,10 @@
 void game_init(Game* game, HWND hWnd) {
 
     game->game_state = STATE_LOGO;
+    game->timer = 0;
+    game->last_update_time = GetTickCount();
+
+
     LoadLogo();
     LoadMap();
 
@@ -41,6 +45,9 @@ void game_init(Game* game, HWND hWnd) {
 }
 
 void game_update(Game* game) {
+    DWORD current_time = GetTickCount();
+
+
     switch (game->game_state) {
     case STATE_LOGO:
         break;
@@ -67,7 +74,15 @@ void game_update(Game* game) {
             }
         }
 
+      
+
         break;
+    }
+    if (game->game_state == STATE_WORLD1) {
+        if (current_time - game->last_update_time >= 1000) {
+            game->timer++;
+            game->last_update_time = current_time;
+        }
     }
 }
 
@@ -92,6 +107,26 @@ void game_render(Game* game, HDC hdc) {
         }
 
         character_render(game->character, hdc, camera_get_x(game->camera), camera_get_y(game->camera), window_width, window_height, game->map->height);
+
+        //타이머그리기
+        std::wstring timer_text = L"Timer: ";
+        timer_text += (game->timer < 100) ? L"0" : L"";
+        timer_text += (game->timer < 10) ? L"0" : L"";
+        timer_text += std::to_wstring(game->timer);
+
+     
+        SetTextColor(hdc, RGB(255, 255, 0));
+        SetBkMode(hdc, TRANSPARENT);
+
+        HFONT hFont = CreateFont(24, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, L"Arial");
+        HFONT hOldFont = (HFONT)SelectObject(hdc, hFont);
+
+        TextOut(hdc, window_width - 150, 10, timer_text.c_str(), timer_text.length());
+
+       
+        SelectObject(hdc, hOldFont);
+        DeleteObject(hFont);
+
         break;
         
 

@@ -10,6 +10,7 @@
 #include "MoveMap.h"
 #include <vector>
 #include "Coin.h"
+#include <string>
 
 enum GameState {
     STATE_LOGO,
@@ -30,6 +31,10 @@ typedef struct {
     std::vector<Coin*> coins; // 코인 벡터
     int coins_num; // 코인 수
     int coin_count; // 획득한 코인 개수
+
+    int timer;
+    DWORD last_update_time;
+
 } Game;
 
 void game_init(Game* game, HWND hWnd);

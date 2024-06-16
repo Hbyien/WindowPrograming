@@ -8,7 +8,7 @@ Character* character_create(int x, int y, int width, int height) {
     character->width = width;
     character->height = height;
     character->jump_velocity = 0.f;
-    character->gravity = 800.f;
+    character->gravity = 500.f;
     character->is_jumping = false;
     character->is_flying = false;
     character->state = IDLE;
@@ -271,7 +271,7 @@ void character_handle_input(Character* character, WPARAM wParam, int key_down) {
                 character->state = FLY;
             }
             else if (!character->is_jumping) {
-                character->jump_velocity = -300;
+                character->jump_velocity = -220;
                 character->is_jumping = true;
                 character->state = JUMP;
             }
@@ -333,6 +333,7 @@ void character_update(Character* character, Map* map, float dt) {
             character->is_jumping = false;
             character->jump_velocity = 0;
             character->state = IDLE;
+
         }
         else {
             character->y = new_y;

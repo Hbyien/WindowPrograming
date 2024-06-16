@@ -90,8 +90,8 @@ void game_update(Game* game) {
         if (game->map->cloud_offset_x >= game->map->width) {
             game->map->cloud_offset_x = 0;
         }
-      
-
+        if( game->character->y > 250 )
+            character_reset_position(game);
         break;
     }
     if (game->game_state == STATE_WORLD1) {

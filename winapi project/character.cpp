@@ -1,9 +1,6 @@
 #include "character.h"
 #include <stdlib.h>
 
-
-
-
 Character* character_create(int x, int y, int width, int height) {
     Character* character = (Character*)malloc(sizeof(Character));
     character->x = x;
@@ -42,7 +39,6 @@ Character* character_create(int x, int y, int width, int height) {
         MessageBox(NULL, L"Failed to load FLY image", L"Error", MB_OK);
         exit(EXIT_FAILURE);
     }
-   
 
     return character;
 }
@@ -55,11 +51,11 @@ void character_move(Character* character, Map* map, int dx, int dy) {
     int new_x = character->x + dx;
     float new_y = character->y + dy;
 
-    if (!map_check_collision(map, new_x, character->y, character->width, character->height-2)) {
+    if (!map_check_collision(map, new_x, character->y, character->width, character->height - 2)) {
         character->x = new_x;
     }
 
-    if (!map_check_collision(map, character->x, new_y, character->width, character->height-2)) {
+    if (!map_check_collision(map, character->x, new_y, character->width, character->height - 2)) {
         character->y = new_y;
     }
     else {
@@ -164,8 +160,7 @@ void character_render(Character* character, HDC hdc, int camera_x, int camera_y,
         }
         break;
     }
-    case JUMP:
-    {
+    case JUMP: {
         int sprite_width = character->images[JUMP].GetWidth() / 6; // Assuming 6 frames for JUMP animation
         int sprite_height = character->images[JUMP].GetHeight();
         int frame_x = character->current_frame * sprite_width;
@@ -334,24 +329,34 @@ void character_update(Character* character, Map* map, float dt) {
             character->state = IDLE;
         }
     }
+    else {
+
+        float new_y = character->y + character->gravity * dt;
+        if (!map_check_collision(map, character->x, new_y, character->width, character->height)) {
+            character->y = new_y;
+            character->is_jumping = true;
+            character->jump_velocity = 0;
+            character->state = JUMP;
+        }
+    }
 
     // 애니메이션 타이머 업데이트 및 프레임 변경
     if (character->state == WALK || character->state == JUMP || character->state == FLY) {
         character->animation_timer += dt;
         if (character->animation_timer >= character->animation_speed) {
             if (character->state == WALK) {
-                character->current_frame = (character->current_frame + 1) % 10; // Assuming 10 frames for WALK animation
+                character->current_frame = (character->current_frame + 1) % 10;
             }
             else if (character->state == JUMP) {
-                character->current_frame = (character->current_frame + 1) % 6; // Assuming 6 frames for JUMP animation
+                character->current_frame = (character->current_frame + 1) % 6;
             }
             else if (character->state == FLY) {
-                character->current_frame = (character->current_frame + 1) % 6; // Assuming 6 frames for FLY animation
+                character->current_frame = (character->current_frame + 1) % 6;
             }
             character->animation_timer = 0.0f;
         }
     }
     else {
-        character->current_frame = 0; // Reset frame to 0 if not walking, jumping, or flying
+        character->current_frame = 0;
     }
 }

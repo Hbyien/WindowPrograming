@@ -14,17 +14,10 @@ typedef struct Cllif {
     int endx;
 };
 
-
-typedef struct Brick {
-    RECT brick_collsion;
-};
-
 typedef struct {
     int x;
     int y;
 } CoinSpawnPoint;
-
-
 
 typedef struct {
     HBITMAP map_image;
@@ -39,11 +32,12 @@ typedef struct {
     KumbaSpawnPoint* spawn_points; // Kumba 소환 위치 배열
     int num_spawn_points; // Kumba 소환 위치 수
     RECT* brick_collision_rects;
-    int num_brick_collsions;
-    CoinSpawnPoint* coin_spawn_points; 
-    int num_coin_spawn_points; 
+    int num_brick_collisions; // 필드명 수정
+    RECT* item_brick_collision_rects; // 추가
+    int num_item_brick_collisions; // 추가
+    CoinSpawnPoint* coin_spawn_points;
+    int num_coin_spawn_points;
 } Map;
-
 
 Map* map_create(const wchar_t* map_filename, const wchar_t* cloud_filename, HWND hWnd);
 void map_destroy(Map* map);

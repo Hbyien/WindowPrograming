@@ -31,7 +31,8 @@ typedef struct {
     std::vector<Coin*> coins; // 코인 벡터
     int coins_num; // 코인 수
     int coin_count; // 획득한 코인 개수
-
+    int restart_x; // 캐릭터 재시작 위치 x
+    int restart_y; // 캐릭터 재시작 위치 y
     int timer;
     DWORD last_update_time;
 
@@ -41,5 +42,5 @@ void game_init(Game* game, HWND hWnd);
 void game_update(Game* game);
 void game_render(Game* game, HDC hdc);
 void game_handle_input(Game* game, WPARAM wParam, LPARAM lParam, int key_down);
-
+void character_reset_position(Game* game);
 #endif // GAME_H

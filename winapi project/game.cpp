@@ -1,7 +1,7 @@
 // game.c
 #include "game.h"
 #include <iostream>
-    
+
 void game_init(Game* game, HWND hWnd) {
 
     game->game_state = STATE_LOGO;
@@ -20,6 +20,8 @@ void game_init(Game* game, HWND hWnd) {
         int window_height = rect.bottom - rect.top;
         game->camera = camera_create(window_width, window_height, game->map->width, game->map->height);
         game->character = character_create(50, 185, 15, 20); // 캐릭터 초기 위치 및 크기 설정
+        game->restart_x = 50; // 재시작 위치 설정
+        game->restart_y = 185;
         kumba_init(L"enemy//kumba.png", 8, RGB(120, 182, 255));
         game->kumbas_num = game->map->num_spawn_points;
         game->kumbas = (Kumba**)malloc(game->kumbas_num * sizeof(Kumba*));
@@ -57,6 +59,15 @@ void game_update(Game* game) {
         float dt = 0.016f;
         for (int i = 0; i < game->kumbas_num; i++) {
             kumba_move(game->kumbas[i], game->map, dt);
+            if (game->kumbas[i]->is_alive && character_kumba_check_collision(game->character, game->kumbas[i])) {
+                if (game->character->y + game->character->height - 5 < game->kumbas[i]->y + game->kumbas[i]->height / 3) {
+                    game->kumbas[i]->is_alive = false; 
+                    game->character->jump_velocity = -200; 
+                }
+                else {
+                    character_reset_position(game); // 캐릭터 죽고 재시작 위치로 이동
+                }
+            }
         }
         character_update(game->character, game->map, dt);
         camera_set(game->camera, game->character);
@@ -192,3 +203,12 @@ void game_handle_input(Game* game, WPARAM wParam, LPARAM lParam, int key_down) {
     }
 }
 
+void character_reset_position(Game* game) {
+    game->character->x = game->restart_x;
+    game->character->y = game->restart_y;
+    game->character->is_jumping = false;
+    game->character->is_flying = false;
+    game->character->jump_velocity = 0;
+    game->character->state = IDLE;
+    game->character->move_direction = 0;
+}

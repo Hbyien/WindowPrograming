@@ -102,3 +102,10 @@ void kumba_render(Kumba* kumba, HDC hdc, int camera_x, int camera_y, int window_
     SelectObject(memDC, oldBitmap);
     DeleteDC(memDC);
 }
+
+bool character_kumba_check_collision(Character* character, Kumba* kumba) {
+    RECT character_rect = { character->x, character->y, character->x + character->width, character->y + character->height };
+    RECT kumba_rect = { kumba->x, kumba->y, kumba->x + kumba->width, kumba->y + kumba->height };
+    RECT intersection;
+    return IntersectRect(&intersection, &character_rect, &kumba_rect);
+}

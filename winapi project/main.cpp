@@ -6,7 +6,6 @@
 #include <iostream>
 #pragma comment(linker,"/entry:WinMainCRTStartup /subsystem:console") 
 
-
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 Game game;
 #define marginX 16
@@ -74,7 +73,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         break;
     }
     case WM_KEYDOWN:
-        game_handle_input(&game, wParam,lParam, 1);
+        game_handle_input(&game, wParam, lParam, 1);
         break;
     case WM_KEYUP:
         game_handle_input(&game, wParam, lParam, 0);

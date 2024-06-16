@@ -1,4 +1,3 @@
-// map.c
 #include "map.h"
 #include <atlimage.h>
 #include <stdio.h>
@@ -128,12 +127,30 @@ CoinSpawnPoint coin_spawn_points[] = {
     {2874, 49}
 };
 
+HBITMAP LoadBrickImage() {
+    CImage brickImage;
+    HRESULT hr = brickImage.Load(L"Brick.png");
+    if (FAILED(hr)) {
+        MessageBox(NULL, L"Failed to load Brick image", L"Error", MB_OK);
+        return NULL;
+    }
+    return brickImage.Detach();
+}
+
 Map* map_create(const wchar_t* filename, const wchar_t* cloud_filename, HWND hWnd) {
     Map* map = (Map*)malloc(sizeof(Map));
     CImage image;
     HRESULT hr = image.Load(filename);
     if (FAILED(hr)) {
         MessageBox(hWnd, L"Failed to load map image", L"Error", MB_OK);
+        free(map);
+        return NULL;
+    }
+
+    //블럭이미지
+    map->brick_image = LoadBrickImage();
+    if (map->brick_image == NULL) {
+        MessageBox(hWnd, L"Failed to load Brick image", L"Error", MB_OK);
         free(map);
         return NULL;
     }
@@ -200,6 +217,7 @@ Map* map_create(const wchar_t* filename, const wchar_t* cloud_filename, HWND hWn
 
 void map_destroy(Map* map) {
     DeleteObject(map->map_image);
+    DeleteObject(map->brick_image);
     free(map->collision_rects);
     free(map->brick_collision_rects);
     free(map->item_brick_collision_rects); // 추가
@@ -253,6 +271,32 @@ void map_render(Map* map, HDC hdc, int x, int y, int window_width, int window_he
 
     SelectObject(hMapDC, oldMapBitmap);
     DeleteDC(hMapDC);
+
+
+    //블럭이미지 그리기
+    HDC hBrickDC = CreateCompatibleDC(hdc);
+    HBITMAP oldBrickBitmap = (HBITMAP)SelectObject(hBrickDC, map->brick_image);
+
+    for (int i = 0; i < map->num_brick_collisions; ++i) {
+        RECT rect = map->brick_collision_rects[i];
+        float scale_x = (float)window_width / map->height;
+        float scale_y = (float)window_height / map->height;
+
+        int dest_left = (int)((rect.left - x) * scale_x);
+        int dest_top = (int)((rect.top - y) * scale_y);
+        int dest_right = (int)((rect.right - x) * scale_x);
+        int dest_bottom = (int)((rect.bottom - y) * scale_y);
+
+        int dest_width = dest_right - dest_left;
+        int dest_height = dest_bottom - dest_top;
+
+        StretchBlt(hdc, dest_left, dest_top, dest_width, dest_height, hBrickDC, 0, 0, BRICK_WIDTH, BRICK_HEIGHT, SRCCOPY);
+    }
+
+    SelectObject(hBrickDC, oldBrickBitmap);
+    DeleteDC(hBrickDC);
+
+
 
     // 충돌 영역을 그립니다.
     if (map->show_collision) {
@@ -322,22 +366,31 @@ void map_update(Map* map, float player_velocity_x, float dt) {
     }
 }
 
-int map_check_collision(Map* map, int x, int y, int width, int height) {
+int map_check_collision(Map* map, int x, int y, int width, int height, int* collision_index) {
     RECT obj_rect = { x, y, x + width, y + height }; // 캐릭터 좌표 받기
 
     for (int i = 0; i < map->num_collision_rects; ++i) {
         if (RectsIntersect(&obj_rect, &map->collision_rects[i])) {
+            if (collision_index != NULL) {
+                *collision_index = i;
+            }
             return 1; // 충돌 발생
         }
     }
     for (int i = 0; i < map->num_brick_collisions; ++i) { // 필드명 수정
         if (RectsIntersect(&obj_rect, &map->brick_collision_rects[i])) {
+            if (collision_index != NULL) {
+                *collision_index = i;
+            }
             return 1; // 충돌 발생
         }
     }
 
     for (int i = 0; i < map->num_item_brick_collisions; ++i) { // 필드명 추가
         if (RectsIntersect(&obj_rect, &map->item_brick_collision_rects[i])) {
+            if (collision_index != NULL) {
+                *collision_index = i;
+            }
             return 1; // 충돌 발생
         }
     }

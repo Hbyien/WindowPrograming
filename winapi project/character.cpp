@@ -51,11 +51,11 @@ void character_move(Character* character, Map* map, int dx, int dy) {
     int new_x = character->x + dx;
     float new_y = character->y + dy;
 
-    if (!map_check_collision(map, new_x, character->y, character->width, character->height - 2)) {
+    if (!map_check_collision(map, new_x, character->y, character->width, character->height - 2, NULL)) {
         character->x = new_x;
     }
 
-    if (!map_check_collision(map, character->x, new_y, character->width, character->height - 2)) {
+    if (!map_check_collision(map, character->x, new_y, character->width, character->height - 2, NULL)) {
         character->y = new_y;
     }
     else {
@@ -292,7 +292,6 @@ void character_handle_input(Character* character, WPARAM wParam, int key_down) {
         }
     }
 }
-
 void character_update(Character* character, Map* map, float dt) {
     int dx = character->move_direction * (character->is_flying ? 1 : 2);
     character_move(character, map, dx, 0);
@@ -313,26 +312,36 @@ void character_update(Character* character, Map* map, float dt) {
         else {
             character->jump_velocity += character->gravity * 0.05f * dt;
         }
-        if (!map_check_collision(map, character->x, new_y, character->width, character->height)) {
+        if (!map_check_collision(map, character->x, new_y, character->width, character->height, NULL)) {
             character->y = new_y;
         }
     }
     else if (character->is_jumping) {
         float new_y = character->y + character->jump_velocity * dt;
-        character->jump_velocity += character->gravity * dt;
-        if (!map_check_collision(map, character->x, new_y, character->width, character->height)) {
-            character->y = new_y;
-        }
-        else {
+        int collision_index = -1;
+        if (map_check_collision(map, character->x, new_y, character->width, character->height, &collision_index)) {
+            if (collision_index != -1 && character->jump_velocity < 0) { // Check if the collision is with the bottom of a brick
+                RECT* brick = &map->brick_collision_rects[collision_index];
+                if (character->y >= brick->bottom) {
+                    // Remove the brick collision
+                    for (int i = collision_index; i < map->num_brick_collisions - 1; ++i) {
+                        map->brick_collision_rects[i] = map->brick_collision_rects[i + 1];
+                    }
+                    map->num_brick_collisions--;
+                }
+            }
             character->is_jumping = false;
             character->jump_velocity = 0;
             character->state = IDLE;
         }
+        else {
+            character->y = new_y;
+            character->jump_velocity += character->gravity * dt;
+        }
     }
     else {
-
         float new_y = character->y + character->gravity * dt;
-        if (!map_check_collision(map, character->x, new_y, character->width, character->height)) {
+        if (!map_check_collision(map, character->x, new_y, character->width, character->height, NULL)) {
             character->y = new_y;
             character->is_jumping = true;
             character->jump_velocity = 0;
@@ -360,3 +369,4 @@ void character_update(Character* character, Map* map, float dt) {
         character->current_frame = 0;
     }
 }
+

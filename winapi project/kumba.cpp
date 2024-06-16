@@ -20,7 +20,7 @@ void kumba_init(const wchar_t* image_path, int frames, COLORREF transparent_colo
     sprite_height = kumba_image.GetHeight();
 }
 
-Kumba* kumba_create(float x, float y, int width, int height, float velocity_x,float velocity_y) {
+Kumba* kumba_create(float x, float y, int width, int height, float velocity_x, float velocity_y) {
     Kumba* kumba = (Kumba*)malloc(sizeof(Kumba));
     kumba->x = x;
     kumba->y = y;
@@ -35,7 +35,6 @@ Kumba* kumba_create(float x, float y, int width, int height, float velocity_x,fl
     kumba->animation_speed = 0.1f; // 애니메이션 속도
     kumba->animation_timer = 0.0f;
     return kumba;
-
 }
 
 void kumba_destroy(Kumba* kumba) {
@@ -47,17 +46,20 @@ void kumba_move(Kumba* kumba, Map* map, float dt) {
 
     // 수평 이동
     float new_x = kumba->x + kumba->velocity_x * dt;
+    int collision_index = -1;
 
-    if (!map_check_collision(map, (int)new_x, (int)kumba->y, kumba->width, kumba->height) && !check_cliff(map, (int)new_x)) {
+    if (!map_check_collision(map, (int)new_x, (int)kumba->y, kumba->width, kumba->height, &collision_index) && !check_cliff(map, (int)new_x)) {
         kumba->x = new_x;
     }
-   else
+    else {
         kumba->velocity_x = -kumba->velocity_x;
+    }
+
     // 중력에 의한 수직 이동
     float new_y = kumba->y + kumba->velocity_y * dt;
     kumba->velocity_y += kumba->gravity * dt;
 
-    if (!map_check_collision(map, (int)kumba->x, (int)new_y, kumba->width, kumba->height)) {
+    if (!map_check_collision(map, (int)kumba->x, (int)new_y, kumba->width, kumba->height, &collision_index)) {
         kumba->y = new_y;
     }
     else {
@@ -69,12 +71,12 @@ void kumba_move(Kumba* kumba, Map* map, float dt) {
         kumba->current_frame = (kumba->current_frame + 1) % kumba->total_frames;
         kumba->animation_timer = 0.0f;
     }
-
 }
 
 int kumba_check_collision(Kumba* kumba, Map* map) {
     if (!kumba->is_alive) return 0;
-    return map_check_collision(map, kumba->x, kumba->y, kumba->width, kumba->height);
+    int collision_index = -1;
+    return map_check_collision(map, (int)kumba->x, (int)kumba->y, kumba->width, kumba->height, &collision_index);
 }
 
 void kumba_render(Kumba* kumba, HDC hdc, int camera_x, int camera_y, int window_width, int window_height, int map_height) {

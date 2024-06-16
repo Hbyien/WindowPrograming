@@ -11,6 +11,7 @@
 #include <vector>
 #include "Coin.h"
 #include <string>
+#include "ui.h"
 
 enum GameState {
     STATE_LOGO,
@@ -35,6 +36,7 @@ typedef struct {
     int restart_y; // 캐릭터 재시작 위치 y
     int timer;
     DWORD last_update_time;
+    UI ui;
 
 } Game;
 

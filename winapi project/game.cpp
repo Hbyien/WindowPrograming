@@ -14,6 +14,7 @@ void game_init(Game* game, HWND hWnd) {
 
     { // map 1 초기화 
         game->map = map_create(L"BaseImage//STAGE1-layer.png", L"BaseImage//STAGE1-layer1.png", hWnd);
+        ui_init(&game->ui, L"Character//Kirby_Standard.png", L"BaseImage//Coin.png",4,0.1f);
         RECT rect;
         GetClientRect(hWnd, &rect);
         int window_width = rect.right - rect.left;
@@ -68,7 +69,9 @@ void game_update(Game* game) {
                     character_reset_position(game); // 캐릭터 죽고 재시작 위치로 이동
                 }
             }
+
         }
+
         character_update(game->character, game->map, dt);
         camera_set(game->camera, game->character);
 
@@ -79,13 +82,16 @@ void game_update(Game* game) {
             if (coin_character_check_collision(game->character, coin)) {
                 game->coin_count++;
                 it = game->coins.erase(it); // 충돌된 코인을 벡터에서 제거
+                ui_update_coins(&game->ui, game->coin_count);
                 free(coin); // 메모리 해제
             }
             else {
                 coin_update(coin, dt);
+
                 ++it;
             }
         }
+        ui_update(&game->ui, dt);
         game->map->cloud_offset_x += 0.1;
         if (game->map->cloud_offset_x >= game->map->width) {
             game->map->cloud_offset_x = 0;
@@ -130,7 +136,7 @@ void game_render(Game* game, HDC hdc) {
         timer_text += (game->timer < 10) ? L"0" : L"";
         timer_text += std::to_wstring(game->timer);
 
-     
+        ui_render(&game->ui, hdc, window_width, window_height);
         SetTextColor(hdc, RGB(255, 255, 0));
         SetBkMode(hdc, TRANSPARENT);
 
@@ -211,4 +217,6 @@ void character_reset_position(Game* game) {
     game->character->jump_velocity = 0;
     game->character->state = IDLE;
     game->character->move_direction = 0;
+
+    ui_update_lives(&game->ui, game->ui.lives - 1);
 }

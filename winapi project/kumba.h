@@ -3,8 +3,10 @@
 
 #include <windows.h>
 #include <atlimage.h>
-#include "character.h"
 #include "map.h"
+#include "character.h"
+
+struct Bullet; // 전방 선언
 
 typedef struct {
     float x;
@@ -26,13 +28,12 @@ extern int sprite_width;
 extern int sprite_height;
 extern int total_frames;    // 총 프레임 수
 
-
-
 void kumba_init(const wchar_t* image_path, int total_frames, COLORREF transparent_color); // 이미지 초기화 함수
 Kumba* kumba_create(float x, float y, int width, int height, float velocity_x, float velocity_y);
 void kumba_destroy(Kumba* kumba);
 void kumba_move(Kumba* kumba, Map* map, float dt);
 int kumba_check_collision(Kumba* kumba, Map* map);
-void kumba_render(Kumba* kumba, HDC hdc, int camera_x, int camera_y, int window_width, int window_height, int map_height);// 렌더링 함수 추가
-bool character_kumba_check_collision(Character* character, Kumba* kumba); 
+void kumba_render(Kumba* kumba, HDC hdc, int camera_x, int camera_y, int window_width, int window_height, int map_height); // 렌더링 함수 추가
+bool character_kumba_check_collision(Character* character, Kumba* kumba);
+
 #endif // KUMBA_H

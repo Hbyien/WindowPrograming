@@ -41,7 +41,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         SetTimer(hWnd, 1, 5, NULL);
         break;
     case WM_TIMER:
-        game_update(&game);
+        game_update(&game,  hWnd);
         InvalidateRect(hWnd, NULL, FALSE);
         break;
     case WM_PAINT: {

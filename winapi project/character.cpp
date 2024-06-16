@@ -40,6 +40,12 @@ Character* character_create(int x, int y, int width, int height) {
         exit(EXIT_FAILURE);
     }
 
+    hr = character->images[FLAG].Load(L"Character//Kirby_Flag.png"); // 플래그 이미지 로드
+    if (FAILED(hr)) {
+        MessageBox(NULL, L"Failed to load FLAG image", L"Error", MB_OK);
+        exit(EXIT_FAILURE);
+    }
+
     return character;
 }
 
@@ -88,23 +94,18 @@ void character_render(Character* character, HDC hdc, int camera_x, int camera_y,
             HBITMAP tempBitmap = CreateCompatibleBitmap(hdc, render_width, render_height);
             HBITMAP oldTempBitmap = (HBITMAP)SelectObject(tempDC, tempBitmap);
 
-            // 원본 이미지를 tempDC에 복사
             TransparentBlt(tempDC, 0, 0, render_width, render_height, memDC, 0, 0, current_image->GetWidth(), current_image->GetHeight(), RGB(0, 0, 0));
 
-            // 새로운 DC와 비트맵 생성
             HDC flippedDC = CreateCompatibleDC(hdc);
             HBITMAP flippedBitmap = CreateCompatibleBitmap(hdc, render_width, render_height);
             HBITMAP oldFlippedBitmap = (HBITMAP)SelectObject(flippedDC, flippedBitmap);
 
-            // tempDC에 있는 이미지를 flippedDC에 좌우 반전하여 복사
             for (int x = 0; x < render_width; x++) {
                 BitBlt(flippedDC, render_width - 1 - x, 0, 1, render_height, tempDC, x, 0, SRCCOPY);
             }
 
-            // flippedDC에서 투명 복사
             TransparentBlt(hdc, render_x, render_y, render_width, render_height, flippedDC, 0, 0, render_width, render_height, RGB(0, 0, 0));
 
-            // 자원 해제
             SelectObject(tempDC, oldTempBitmap);
             DeleteObject(tempBitmap);
             DeleteDC(tempDC);
@@ -114,7 +115,36 @@ void character_render(Character* character, HDC hdc, int camera_x, int camera_y,
             DeleteDC(flippedDC);
         }
         break;
+    case FLAG: // 깃발 상태 처리 추가
+        if (character->direction == RIGHT) {
+            TransparentBlt(hdc, render_x, render_y, render_width, render_height, memDC, 0, 0, current_image->GetWidth(), current_image->GetHeight(), RGB(255, 255, 255));
+        }
+        else {
+            HDC tempDC = CreateCompatibleDC(hdc);
+            HBITMAP tempBitmap = CreateCompatibleBitmap(hdc, render_width, render_height);
+            HBITMAP oldTempBitmap = (HBITMAP)SelectObject(tempDC, tempBitmap);
 
+            TransparentBlt(tempDC, 0, 0, render_width, render_height, memDC, 0, 0, current_image->GetWidth(), current_image->GetHeight(), RGB(255, 255, 255));
+
+            HDC flippedDC = CreateCompatibleDC(hdc);
+            HBITMAP flippedBitmap = CreateCompatibleBitmap(hdc, render_width, render_height);
+            HBITMAP oldFlippedBitmap = (HBITMAP)SelectObject(flippedDC, flippedBitmap);
+
+            for (int x = 0; x < render_width; x++) {
+                BitBlt(flippedDC, render_width - 1 - x, 0, 1, render_height, tempDC, x, 0, SRCCOPY);
+            }
+
+            TransparentBlt(hdc, render_x, render_y, render_width, render_height, flippedDC, 0, 0, render_width, render_height, RGB(255, 255, 255));
+
+            SelectObject(tempDC, oldTempBitmap);
+            DeleteObject(tempBitmap);
+            DeleteDC(tempDC);
+
+            SelectObject(flippedDC, oldFlippedBitmap);
+            DeleteObject(flippedBitmap);
+            DeleteDC(flippedDC);
+        }
+        break;
     case WALK: {
         int sprite_width = character->images[WALK].GetWidth() / 10;
         int sprite_height = character->images[WALK].GetHeight();
@@ -276,6 +306,10 @@ void character_handle_input(Character* character, WPARAM wParam, int key_down) {
                 character->state = JUMP;
             }
             break;
+        case 'f':
+        case 'F':
+            character_fire(character);
+            break;
         case 'E':
         case 'e':
             if (character->is_flying) {
@@ -340,8 +374,11 @@ void character_update(Character* character, Map* map, float dt) {
             character->jump_velocity += character->gravity * dt;
         }
     }
+    else if(character->on_flag){
+        
+    }
     else {
-        float new_y = character->y + character->gravity * dt;
+        float new_y = character->y +character->gravity* dt;
         if (!map_check_collision(map, character->x, new_y, character->width, character->height, NULL)) {
             character->y = new_y;
             character->is_jumping = true;
@@ -369,5 +406,24 @@ void character_update(Character* character, Map* map, float dt) {
     else {
         character->current_frame = 0;
     }
+ 
+    // 총알 리스트에서 비활성화된 총알 제거
+    for (auto& bullet : character->bullets) {
+        bullet_update(bullet, dt, map);
+    }
+
+    // 총알 리스트에서 비활성화된 총알 제거
+    character->bullets.erase(
+        std::remove_if(character->bullets.begin(), character->bullets.end(), [](Bullet* bullet) { return !bullet->active; }),
+        character->bullets.end()
+    );
 }
 
+void character_fire(Character* character) {
+    int bullet_x = character->x + (character->direction == RIGHT ? character->width : -16); 
+    int bullet_y = character->y + character->height / 3; 
+    int bullet_speed = 5 * (character->direction == RIGHT ? 1 : -1); 
+
+    Bullet* new_bullet = bullet_create(bullet_x, bullet_y, bullet_speed);
+    character->bullets.push_back(new_bullet);
+}

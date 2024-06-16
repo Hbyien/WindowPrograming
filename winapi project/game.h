@@ -41,8 +41,10 @@ typedef struct {
 } Game;
 
 void game_init(Game* game, HWND hWnd);
-void game_update(Game* game);
+void game_update(Game* game, HWND hWnd);
 void game_render(Game* game, HDC hdc);
 void game_handle_input(Game* game, WPARAM wParam, LPARAM lParam, int key_down);
-void character_reset_position(Game* game);
+void character_reset_position(Game* game,HWND hWnd);
+bool bullet_kumba_check_collision(Bullet* bullet, Kumba* kumba);
+
 #endif // GAME_H

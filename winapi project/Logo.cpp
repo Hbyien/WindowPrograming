@@ -27,3 +27,4 @@ void RenderLogo(HDC hDC) {
     }
 
 }
+
